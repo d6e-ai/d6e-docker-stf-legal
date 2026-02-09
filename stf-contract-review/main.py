@@ -306,6 +306,138 @@ class ContractReviewAnalyzer:
             }
         }
 
+    def describe(self) -> Dict[str, Any]:
+        """
+        Return the input schema and available operations for this STF.
+
+        Returns:
+            Schema definition with operations, required/optional fields, and property types
+        """
+        return {
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": [
+                            "review_contract", "analyze_clause", "generate_redline",
+                            "classify_deviation", "generate_review_summary", "describe"
+                        ],
+                        "description": "The operation to perform"
+                    },
+                    "contract_data": {
+                        "type": "object",
+                        "description": "Contract details for review",
+                        "properties": {
+                            "contract_type": {"type": "string", "description": "SaaS, professional_services, license, etc."},
+                            "our_side": {"type": "string", "enum": ["vendor", "customer", "licensor", "licensee", "partner"]},
+                            "counterparty": {"type": "string"},
+                            "clauses": {
+                                "type": "object",
+                                "description": "Dict of clause type -> clause details",
+                                "properties": {
+                                    "limitation_of_liability": {"type": "object"},
+                                    "indemnification": {"type": "object"},
+                                    "intellectual_property": {"type": "object"},
+                                    "data_protection": {"type": "object"},
+                                    "term_and_termination": {"type": "object"},
+                                    "governing_law": {"type": "object"},
+                                    "confidentiality": {"type": "object"},
+                                    "warranties": {"type": "object"},
+                                    "insurance": {"type": "object"}
+                                }
+                            }
+                        }
+                    },
+                    "playbook": {
+                        "type": "object",
+                        "description": "Optional custom negotiation playbook (defaults to standard positions)"
+                    },
+                    "clause_type": {
+                        "type": "string",
+                        "enum": [
+                            "limitation_of_liability", "indemnification", "intellectual_property",
+                            "data_protection", "term_and_termination", "governing_law",
+                            "confidentiality", "warranties", "insurance"
+                        ],
+                        "description": "Type of clause to analyze"
+                    },
+                    "clause_details": {
+                        "type": "object",
+                        "description": "Details of the clause to analyze"
+                    },
+                    "our_side": {
+                        "type": "string",
+                        "enum": ["vendor", "customer", "licensor", "licensee", "partner"],
+                        "description": "Our position in the contract"
+                    },
+                    "contract_type": {
+                        "type": "string",
+                        "description": "Type of contract"
+                    },
+                    "current_language": {
+                        "type": "string",
+                        "description": "Current contract language for redline generation"
+                    },
+                    "issue_description": {
+                        "type": "string",
+                        "description": "Description of the issue for redline generation"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": ["must_have", "should_have", "nice_to_have"],
+                        "description": "Redline priority level"
+                    },
+                    "deviation_type": {
+                        "type": "string",
+                        "description": "Type of deviation to classify"
+                    },
+                    "details": {
+                        "type": "object",
+                        "description": "Additional details for deviation classification"
+                    },
+                    "deviations": {
+                        "type": "array",
+                        "items": {"type": "object"},
+                        "description": "List of deviations for review summary"
+                    }
+                },
+                "required": ["operation"]
+            },
+            "operations": {
+                "review_contract": {
+                    "description": "Perform full contract review against negotiation playbook",
+                    "required": ["contract_data"],
+                    "optional": ["playbook"]
+                },
+                "analyze_clause": {
+                    "description": "Analyze a specific contract clause against playbook position",
+                    "required": ["clause_type", "clause_details"],
+                    "optional": ["our_side", "contract_type"]
+                },
+                "generate_redline": {
+                    "description": "Generate redline suggestion for a specific clause issue",
+                    "required": ["clause_type", "current_language", "issue_description"],
+                    "optional": ["priority"]
+                },
+                "classify_deviation": {
+                    "description": "Classify a specific deviation's severity",
+                    "required": ["clause_type", "deviation_type"],
+                    "optional": ["details"]
+                },
+                "generate_review_summary": {
+                    "description": "Generate structured review summary with priorities",
+                    "required": ["deviations", "contract_data"],
+                    "optional": []
+                },
+                "describe": {
+                    "description": "Return the input schema and available operations",
+                    "required": [],
+                    "optional": []
+                }
+            }
+        }
+
     # --- Internal analysis methods ---
 
     def _analyzeClause(
@@ -835,11 +967,14 @@ def main():
                 contractData=userInput["contract_data"]
             )
 
+        elif operation == "describe":
+            result = analyzer.describe()
+
         else:
             raise ValueError(
                 f"Unknown operation: {operation}. "
                 f"Valid operations: review_contract, analyze_clause, "
-                f"generate_redline, classify_deviation, generate_review_summary"
+                f"generate_redline, classify_deviation, generate_review_summary, describe"
             )
 
         writeOutput({

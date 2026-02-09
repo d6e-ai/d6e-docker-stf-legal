@@ -343,6 +343,113 @@ class CannedResponseGenerator:
             "is_complete": len(remaining) == 0
         }
 
+    def describe(self) -> Dict[str, Any]:
+        """
+        Return the input schema and available operations for this STF.
+
+        Returns:
+            Schema definition with operations, required/optional fields, and property types
+        """
+        return {
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": [
+                            "generate_response", "check_escalation", "list_templates",
+                            "create_template", "customize_response", "describe"
+                        ],
+                        "description": "The operation to perform"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "dsr", "discovery_hold", "privacy_inquiry",
+                            "vendor_legal", "nda_request", "subpoena",
+                            "insurance_notification"
+                        ],
+                        "description": "Template category"
+                    },
+                    "sub_category": {
+                        "type": "string",
+                        "description": "Specific template within the category"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "description": "Variable values for template substitution (key-value pairs)"
+                    },
+                    "tone": {
+                        "type": "string",
+                        "enum": ["professional", "formal", "empathetic"],
+                        "description": "Response tone"
+                    },
+                    "triggers": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of detected escalation trigger identifiers"
+                    },
+                    "template_data": {
+                        "type": "object",
+                        "description": "Template definition for create_template",
+                        "properties": {
+                            "category": {"type": "string"},
+                            "sub_category": {"type": "string"},
+                            "description": {"type": "string"},
+                            "subject": {"type": "string", "description": "Email subject template with {{variable}} placeholders"},
+                            "body": {"type": "string", "description": "Response body template with {{variable}} placeholders"},
+                            "required_variables": {"type": "array", "items": {"type": "string"}},
+                            "follow_up_actions": {"type": "array", "items": {"type": "string"}},
+                            "escalation_triggers": {"type": "array", "items": {"type": "string"}},
+                            "notes": {"type": "string"}
+                        },
+                        "required": ["category", "sub_category", "body"]
+                    },
+                    "response_body": {
+                        "type": "string",
+                        "description": "Base response text for customization"
+                    },
+                    "customizations": {
+                        "type": "object",
+                        "description": "Additional variable substitutions for customize_response"
+                    }
+                },
+                "required": ["operation"]
+            },
+            "operations": {
+                "generate_response": {
+                    "description": "Generate a templated response for common legal inquiries",
+                    "required": ["category", "sub_category", "variables"],
+                    "optional": ["tone"]
+                },
+                "check_escalation": {
+                    "description": "Check for escalation triggers before generating a response",
+                    "required": ["category", "triggers"],
+                    "optional": []
+                },
+                "list_templates": {
+                    "description": "List available template categories and sub-categories",
+                    "required": [],
+                    "optional": ["category"]
+                },
+                "create_template": {
+                    "description": "Create a new response template",
+                    "required": ["template_data"],
+                    "optional": []
+                },
+                "customize_response": {
+                    "description": "Apply additional customizations to a generated response body",
+                    "required": ["response_body", "customizations"],
+                    "optional": []
+                },
+                "describe": {
+                    "description": "Return the input schema and available operations",
+                    "required": [],
+                    "optional": []
+                }
+            }
+        }
+
     # --- Internal methods ---
 
     def _getEscalationPath(self, category: str, triggers: List[str]) -> str:
@@ -693,11 +800,14 @@ def main():
                 customizations=userInput["customizations"]
             )
 
+        elif operation == "describe":
+            result = generator.describe()
+
         else:
             raise ValueError(
                 f"Unknown operation: {operation}. "
                 f"Valid operations: generate_response, check_escalation, "
-                f"list_templates, create_template, customize_response"
+                f"list_templates, create_template, customize_response, describe"
             )
 
         writeOutput({

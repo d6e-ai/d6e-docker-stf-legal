@@ -291,6 +291,116 @@ class LegalRiskAssessor:
             "text_representation": textMatrix
         }
 
+    def describe(self) -> Dict[str, Any]:
+        """
+        Return the input schema and available operations for this STF.
+
+        Returns:
+            Schema definition with operations, required/optional fields, and property types
+        """
+        return {
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": [
+                            "assess_risk", "calculate_risk_score", "generate_risk_memo",
+                            "create_risk_register_entry", "get_escalation_recommendation",
+                            "generate_risk_matrix", "describe"
+                        ],
+                        "description": "The operation to perform"
+                    },
+                    "risk_data": {
+                        "type": "object",
+                        "description": "Risk details for assessment or register entry",
+                        "properties": {
+                            "description": {"type": "string", "description": "Risk description"},
+                            "category": {
+                                "type": "string",
+                                "enum": ["Contract", "Regulatory", "Litigation", "IP", "Data Privacy", "Employment", "Corporate", "Other"]
+                            },
+                            "severity": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Severity rating (1-5)"},
+                            "likelihood": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Likelihood rating (1-5)"},
+                            "context": {"type": "string", "description": "Background and context"},
+                            "contributing_factors": {"type": "array", "items": {"type": "string"}},
+                            "mitigating_factors": {"type": "array", "items": {"type": "string"}},
+                            "financial_exposure": {"type": "string", "description": "Estimated financial exposure"},
+                            "matter_reference": {"type": "string"},
+                            "owner": {"type": "string"},
+                            "mitigations": {"type": "array", "items": {"type": "string"}},
+                            "review_date": {"type": "string", "format": "date"},
+                            "notes": {"type": "string"},
+                            "escalation_triggers": {"type": "array", "items": {"type": "string"}}
+                        }
+                    },
+                    "severity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "Severity rating for risk score calculation"
+                    },
+                    "likelihood": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "Likelihood rating for risk score calculation"
+                    },
+                    "assessment_data": {
+                        "type": "object",
+                        "description": "Full assessment data or risk input data for memo generation"
+                    },
+                    "risk_level": {
+                        "type": "string",
+                        "enum": ["GREEN", "YELLOW", "ORANGE", "RED"],
+                        "description": "Risk level for escalation recommendation"
+                    },
+                    "context": {
+                        "type": "object",
+                        "description": "Optional additional context"
+                    }
+                },
+                "required": ["operation"]
+            },
+            "operations": {
+                "assess_risk": {
+                    "description": "Perform full risk assessment with severity x likelihood scoring",
+                    "required": ["risk_data"],
+                    "optional": []
+                },
+                "calculate_risk_score": {
+                    "description": "Calculate risk score from severity and likelihood ratings",
+                    "required": ["severity", "likelihood"],
+                    "optional": []
+                },
+                "generate_risk_memo": {
+                    "description": "Generate structured risk assessment memo",
+                    "required": ["assessment_data"],
+                    "optional": []
+                },
+                "create_risk_register_entry": {
+                    "description": "Create a risk register entry with tracking fields",
+                    "required": ["risk_data"],
+                    "optional": []
+                },
+                "get_escalation_recommendation": {
+                    "description": "Get escalation guidance based on risk level",
+                    "required": ["risk_level"],
+                    "optional": ["context"]
+                },
+                "generate_risk_matrix": {
+                    "description": "Generate 5x5 risk matrix visualization data",
+                    "required": [],
+                    "optional": []
+                },
+                "describe": {
+                    "description": "Return the input schema and available operations",
+                    "required": [],
+                    "optional": []
+                }
+            }
+        }
+
     # --- Internal methods ---
 
     def _getRecommendedActions(self, riskColor: str) -> List[Dict[str, Any]]:
@@ -573,12 +683,15 @@ def main():
         elif operation == "generate_risk_matrix":
             result = assessor.generateRiskMatrix()
 
+        elif operation == "describe":
+            result = assessor.describe()
+
         else:
             raise ValueError(
                 f"Unknown operation: {operation}. "
                 f"Valid operations: assess_risk, calculate_risk_score, "
                 f"generate_risk_memo, create_risk_register_entry, "
-                f"get_escalation_recommendation, generate_risk_matrix"
+                f"get_escalation_recommendation, generate_risk_matrix, describe"
             )
 
         writeOutput({

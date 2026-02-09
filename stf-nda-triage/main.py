@@ -335,6 +335,121 @@ class NdaTriageAnalyzer:
 
         return checklist
 
+    def describe(self) -> Dict[str, Any]:
+        """
+        Return the input schema and available operations for this STF.
+
+        Returns:
+            Schema definition with operations, required/optional fields, and property types
+        """
+        return {
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": [
+                            "triage_nda", "check_clause",
+                            "get_routing_recommendation", "generate_checklist",
+                            "describe"
+                        ],
+                        "description": "The operation to perform"
+                    },
+                    "nda_data": {
+                        "type": "object",
+                        "description": "NDA details for triage evaluation",
+                        "properties": {
+                            "nda_type": {"type": "string", "enum": ["mutual", "unilateral_disclosing", "unilateral_receiving"]},
+                            "counterparty": {"type": "string"},
+                            "purpose": {"type": "string"},
+                            "confidential_info_definition": {"type": "string"},
+                            "confidential_info_scope": {"type": "string", "enum": ["reasonable", "broad", "overbroad"]},
+                            "carveouts_present": {"type": "array", "items": {"type": "string"}},
+                            "term_years": {"type": "number"},
+                            "survival_years": {"type": "number"},
+                            "is_perpetual": {"type": "boolean"},
+                            "governing_law": {"type": "string"},
+                            "has_marking_requirement": {"type": "boolean"},
+                            "marking_workable": {"type": "boolean"},
+                            "permitted_disclosures": {"type": "array", "items": {"type": "string"}},
+                            "return_destruction": {
+                                "type": "object",
+                                "properties": {
+                                    "has_obligation": {"type": "boolean"},
+                                    "has_retention_exception": {"type": "boolean"},
+                                    "requires_sworn_affidavit": {"type": "boolean"}
+                                }
+                            },
+                            "problematic_provisions": {"type": "array", "items": {"type": "string"}},
+                            "has_mandatory_arbitration": {"type": "boolean"},
+                            "jurisdiction_acceptable": {"type": "boolean"},
+                            "has_injunctive_relief": {"type": "boolean"},
+                            "has_liquidated_damages": {"type": "boolean"},
+                            "is_mutual_remedies": {"type": "boolean"},
+                            "is_standalone": {"type": "boolean"},
+                            "expected_type": {"type": "string"},
+                            "trade_secret_justification": {"type": "boolean"}
+                        }
+                    },
+                    "clause_type": {
+                        "type": "string",
+                        "enum": [
+                            "agreement_structure", "confidential_info", "carveouts",
+                            "permitted_disclosures", "term", "return_destruction",
+                            "problematic_provisions", "governing_law", "remedies"
+                        ],
+                        "description": "Type of clause to check"
+                    },
+                    "clause_data": {
+                        "type": "object",
+                        "description": "Clause-specific data for check_clause operation"
+                    },
+                    "classification": {
+                        "type": "string",
+                        "enum": ["GREEN", "YELLOW", "RED"],
+                        "description": "NDA classification for routing recommendation"
+                    },
+                    "context": {
+                        "type": "object",
+                        "description": "Optional additional context for routing"
+                    },
+                    "nda_type": {
+                        "type": "string",
+                        "enum": ["mutual", "unilateral_disclosing", "unilateral_receiving"],
+                        "description": "NDA type for checklist generation"
+                    }
+                },
+                "required": ["operation"]
+            },
+            "operations": {
+                "triage_nda": {
+                    "description": "Perform full NDA triage evaluation with GREEN/YELLOW/RED classification",
+                    "required": ["nda_data"],
+                    "optional": []
+                },
+                "check_clause": {
+                    "description": "Check a specific NDA clause against standard criteria",
+                    "required": ["clause_type", "clause_data"],
+                    "optional": []
+                },
+                "get_routing_recommendation": {
+                    "description": "Get routing recommendation based on NDA classification",
+                    "required": ["classification"],
+                    "optional": ["context"]
+                },
+                "generate_checklist": {
+                    "description": "Generate a blank NDA screening checklist",
+                    "required": [],
+                    "optional": ["nda_type"]
+                },
+                "describe": {
+                    "description": "Return the input schema and available operations",
+                    "required": [],
+                    "optional": []
+                }
+            }
+        }
+
     # --- Internal check methods ---
 
     def _checkAgreementStructure(self, ndaData: Dict[str, Any]) -> Dict[str, Any]:
@@ -865,11 +980,14 @@ def main():
                 ndaType=userInput.get("nda_type", "mutual")
             )
 
+        elif operation == "describe":
+            result = analyzer.describe()
+
         else:
             raise ValueError(
                 f"Unknown operation: {operation}. "
                 f"Valid operations: triage_nda, check_clause, "
-                f"get_routing_recommendation, generate_checklist"
+                f"get_routing_recommendation, generate_checklist, describe"
             )
 
         writeOutput({

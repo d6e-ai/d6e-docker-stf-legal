@@ -399,6 +399,188 @@ class MeetingBriefingGenerator:
 
         return followUp
 
+    def describe(self) -> Dict[str, Any]:
+        """
+        Return the input schema and available operations for this STF.
+
+        Returns:
+            Schema definition with operations, required/optional fields, and property types
+        """
+        return {
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": [
+                            "generate_briefing", "create_action_items",
+                            "get_meeting_prep_checklist", "track_action_items",
+                            "generate_follow_up", "describe"
+                        ],
+                        "description": "The operation to perform"
+                    },
+                    "meeting_data": {
+                        "type": "object",
+                        "description": "Meeting details for briefing generation",
+                        "properties": {
+                            "meeting_title": {"type": "string"},
+                            "meeting_type": {
+                                "type": "string",
+                                "enum": [
+                                    "deal_review", "board_committee", "vendor_call",
+                                    "team_sync", "client_customer", "regulatory",
+                                    "litigation", "cross_functional"
+                                ]
+                            },
+                            "date_time": {"type": "string", "description": "Date and time with timezone"},
+                            "duration": {"type": "string"},
+                            "location": {"type": "string", "description": "Physical location or video link"},
+                            "your_role": {
+                                "type": "string",
+                                "enum": ["advisor", "presenter", "negotiator", "observer"]
+                            },
+                            "participants": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "organization": {"type": "string"},
+                                        "role": {"type": "string"},
+                                        "key_interests": {"type": "string"},
+                                        "notes": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "agenda": {
+                                "type": "array",
+                                "items": {
+                                    "oneOf": [
+                                        {"type": "string"},
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "topic": {"type": "string"},
+                                                "context": {"type": "string"},
+                                                "time_allocation": {"type": "string"}
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "background": {"type": "string"},
+                            "open_issues": {"type": "array", "items": {"type": "object"}},
+                            "key_documents": {"type": "array", "items": {"type": "string"}},
+                            "legal_considerations": {"type": "string"},
+                            "talking_points": {"type": "array", "items": {"type": "string"}},
+                            "questions_to_raise": {"type": "array", "items": {"type": "string"}},
+                            "decisions_needed": {"type": "array", "items": {"type": "string"}},
+                            "red_lines": {"type": "array", "items": {"type": "string"}},
+                            "prior_meeting_followup": {"type": "array", "items": {"type": "string"}},
+                            "preparation_gaps": {"type": "array", "items": {"type": "string"}}
+                        }
+                    },
+                    "action_data": {
+                        "type": "object",
+                        "description": "Action items from meeting outcomes",
+                        "properties": {
+                            "meeting_title": {"type": "string"},
+                            "meeting_date": {"type": "string", "format": "date"},
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "description": {"type": "string"},
+                                        "owner": {"type": "string"},
+                                        "deadline": {"type": "string", "format": "date"},
+                                        "priority": {"type": "string", "enum": ["High", "Medium", "Low"]},
+                                        "type": {"type": "string", "enum": ["legal_team", "business_team", "external", "follow_up_meeting"]},
+                                        "dependencies": {"type": "array", "items": {"type": "string"}},
+                                        "notes": {"type": "string"}
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "meeting_type": {
+                        "type": "string",
+                        "enum": [
+                            "deal_review", "board_committee", "vendor_call",
+                            "team_sync", "client_customer", "regulatory",
+                            "litigation", "cross_functional"
+                        ],
+                        "description": "Meeting type for prep checklist"
+                    },
+                    "tracking_data": {
+                        "type": "object",
+                        "description": "Action item tracking updates",
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "action_id": {"type": "string"},
+                                        "new_status": {"type": "string", "enum": ["Open", "In Progress", "Completed", "Overdue", "Cancelled"]},
+                                        "updated_by": {"type": "string"},
+                                        "notes": {"type": "string"}
+                                    }
+                                }
+                            },
+                            "notes": {"type": "string"}
+                        }
+                    },
+                    "follow_up_data": {
+                        "type": "object",
+                        "description": "Post-meeting follow-up data",
+                        "properties": {
+                            "meeting_title": {"type": "string"},
+                            "meeting_date": {"type": "string", "format": "date"},
+                            "attendees": {"type": "array", "items": {"type": "string"}},
+                            "key_decisions": {"type": "array", "items": {"type": "string"}},
+                            "action_items": {"type": "array", "items": {"type": "object"}},
+                            "next_meeting": {"type": "string"},
+                            "notes": {"type": "string"}
+                        }
+                    }
+                },
+                "required": ["operation"]
+            },
+            "operations": {
+                "generate_briefing": {
+                    "description": "Generate a structured meeting briefing with prep materials",
+                    "required": ["meeting_data"],
+                    "optional": []
+                },
+                "create_action_items": {
+                    "description": "Create action items from meeting outcomes with tracking",
+                    "required": ["action_data"],
+                    "optional": []
+                },
+                "get_meeting_prep_checklist": {
+                    "description": "Get preparation checklist by meeting type",
+                    "required": ["meeting_type"],
+                    "optional": []
+                },
+                "track_action_items": {
+                    "description": "Update and track action item status",
+                    "required": ["tracking_data"],
+                    "optional": []
+                },
+                "generate_follow_up": {
+                    "description": "Generate post-meeting follow-up summary",
+                    "required": ["follow_up_data"],
+                    "optional": []
+                },
+                "describe": {
+                    "description": "Return the input schema and available operations",
+                    "required": [],
+                    "optional": []
+                }
+            }
+        }
+
     # --- Internal methods ---
 
     def _formatParticipants(self, participants: List[Dict]) -> List[Dict]:
@@ -632,11 +814,14 @@ def main():
                 followUpData=userInput["follow_up_data"]
             )
 
+        elif operation == "describe":
+            result = generator.describe()
+
         else:
             raise ValueError(
                 f"Unknown operation: {operation}. "
                 f"Valid operations: generate_briefing, create_action_items, "
-                f"get_meeting_prep_checklist, track_action_items, generate_follow_up"
+                f"get_meeting_prep_checklist, track_action_items, generate_follow_up, describe"
             )
 
         writeOutput({

@@ -520,6 +520,152 @@ class ComplianceAnalyzer:
 
         return overviews[regulationUpper]
 
+    def describe(self) -> Dict[str, Any]:
+        """
+        Return the input schema and available operations for this STF.
+
+        Returns:
+            Schema definition with operations, required/optional fields, and property types
+        """
+        return {
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": [
+                            "review_dpa", "process_dsr", "get_response_timeline",
+                            "check_exemptions", "generate_dpa_checklist",
+                            "get_regulation_overview", "describe"
+                        ],
+                        "description": "The operation to perform"
+                    },
+                    "dpa_data": {
+                        "type": "object",
+                        "description": "DPA details for review",
+                        "properties": {
+                            "counterparty": {"type": "string", "description": "Name of the processor/controller"},
+                            "required_elements": {
+                                "type": "object",
+                                "description": "Dict of element name -> present (boolean)",
+                                "properties": {
+                                    "subject_matter_and_duration": {"type": "boolean"},
+                                    "nature_and_purpose": {"type": "boolean"},
+                                    "type_of_personal_data": {"type": "boolean"},
+                                    "categories_of_data_subjects": {"type": "boolean"},
+                                    "controller_obligations_and_rights": {"type": "boolean"}
+                                }
+                            },
+                            "processor_obligations": {
+                                "type": "object",
+                                "description": "Dict of obligation name -> present (boolean)",
+                                "properties": {
+                                    "process_on_instructions_only": {"type": "boolean"},
+                                    "confidentiality_commitment": {"type": "boolean"},
+                                    "security_measures": {"type": "boolean"},
+                                    "sub_processor_requirements": {"type": "boolean"},
+                                    "data_subject_rights_assistance": {"type": "boolean"},
+                                    "security_breach_assistance": {"type": "boolean"},
+                                    "deletion_or_return_on_termination": {"type": "boolean"},
+                                    "audit_rights": {"type": "boolean"},
+                                    "breach_notification": {"type": "boolean"}
+                                }
+                            },
+                            "breach_notification_hours": {"type": "number", "description": "Breach notification timeline in hours"},
+                            "sub_processor_authorization": {
+                                "type": "string",
+                                "enum": ["specific", "general_with_notice", "blanket"]
+                            },
+                            "international_transfers": {
+                                "type": "object",
+                                "properties": {
+                                    "has_transfer_mechanism": {"type": "boolean"},
+                                    "mechanism": {"type": "string"},
+                                    "sccs_version": {"type": "string"}
+                                }
+                            }
+                        }
+                    },
+                    "dsr_data": {
+                        "type": "object",
+                        "description": "Data subject request details",
+                        "properties": {
+                            "request_type": {
+                                "type": "string",
+                                "enum": ["access", "rectification", "erasure", "restriction", "portability", "objection", "opt_out_sale", "limit_sensitive_pi"]
+                            },
+                            "regulation": {"type": "string", "enum": ["GDPR", "CCPA", "UK_GDPR", "LGPD"]},
+                            "requester_name": {"type": "string"},
+                            "requester_location": {"type": "string"},
+                            "date_received": {"type": "string", "format": "date", "description": "YYYY-MM-DD format"},
+                            "identity_verified": {"type": "boolean"},
+                            "subject_to_litigation_hold": {"type": "boolean"},
+                            "involves_minor": {"type": "boolean"},
+                            "special_category_data": {"type": "boolean"},
+                            "active_litigation": {"type": "boolean"},
+                            "active_hr_matter": {"type": "boolean"},
+                            "broad_scope": {"type": "boolean"},
+                            "regulatory_retention": {"type": "boolean"},
+                            "public_interest": {"type": "boolean"},
+                            "third_party_rights_affected": {"type": "boolean"}
+                        }
+                    },
+                    "regulation": {
+                        "type": "string",
+                        "enum": ["GDPR", "CCPA", "UK_GDPR", "LGPD"],
+                        "description": "Applicable privacy regulation"
+                    },
+                    "date_received": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Date request was received (YYYY-MM-DD)"
+                    },
+                    "include_transfers": {
+                        "type": "boolean",
+                        "description": "Whether to include international transfer checks in DPA checklist"
+                    }
+                },
+                "required": ["operation"]
+            },
+            "operations": {
+                "review_dpa": {
+                    "description": "Review Data Processing Agreement against GDPR Article 28 checklist",
+                    "required": ["dpa_data"],
+                    "optional": []
+                },
+                "process_dsr": {
+                    "description": "Process and track a data subject request with timelines and steps",
+                    "required": ["dsr_data"],
+                    "optional": []
+                },
+                "get_response_timeline": {
+                    "description": "Get DSR response timeline with key dates for a specific regulation",
+                    "required": ["regulation", "date_received"],
+                    "optional": []
+                },
+                "check_exemptions": {
+                    "description": "Check applicable exemptions for a data subject request",
+                    "required": ["dsr_data"],
+                    "optional": []
+                },
+                "generate_dpa_checklist": {
+                    "description": "Generate a blank DPA review checklist",
+                    "required": [],
+                    "optional": ["include_transfers"]
+                },
+                "get_regulation_overview": {
+                    "description": "Get overview of a specific privacy regulation and its key obligations",
+                    "required": ["regulation"],
+                    "optional": []
+                },
+                "describe": {
+                    "description": "Return the input schema and available operations",
+                    "required": [],
+                    "optional": []
+                }
+            }
+        }
+
     # --- Internal methods ---
 
     def _calculateDsrTimeline(self, regulation: str, dateReceived: Optional[str]) -> Dict[str, Any]:
@@ -749,12 +895,15 @@ def main():
                 regulation=userInput["regulation"]
             )
 
+        elif operation == "describe":
+            result = analyzer.describe()
+
         else:
             raise ValueError(
                 f"Unknown operation: {operation}. "
                 f"Valid operations: review_dpa, process_dsr, "
                 f"get_response_timeline, check_exemptions, "
-                f"generate_dpa_checklist, get_regulation_overview"
+                f"generate_dpa_checklist, get_regulation_overview, describe"
             )
 
         writeOutput({
