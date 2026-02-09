@@ -13,6 +13,7 @@ Main Operations:
   - create_risk_register_entry: Create risk register entry
   - get_escalation_recommendation: Get escalation guidance based on risk level
   - generate_risk_matrix: Generate risk matrix visualization
+  - describe: Return input schema and available operations
 
 Limitations:
   - Provides legal workflow assistance, not legal advice

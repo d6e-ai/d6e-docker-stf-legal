@@ -13,6 +13,7 @@ Main Operations:
   - check_exemptions: Check applicable exemptions for a DSR
   - generate_dpa_checklist: Generate blank DPA review checklist
   - get_regulation_overview: Get overview of a specific regulation
+  - describe: Return input schema and available operations
 
 Limitations:
   - Provides legal workflow assistance, not legal advice

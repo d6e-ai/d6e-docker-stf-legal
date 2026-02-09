@@ -12,6 +12,7 @@ Main Operations:
   - check_clause: Check a specific clause against standard criteria
   - get_routing_recommendation: Get routing based on classification
   - generate_checklist: Generate NDA screening checklist
+  - describe: Return input schema and available operations
 
 Limitations:
   - Provides legal workflow assistance, not legal advice

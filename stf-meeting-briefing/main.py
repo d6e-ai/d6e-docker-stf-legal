@@ -12,6 +12,7 @@ Main Operations:
   - get_meeting_prep_checklist: Get preparation checklist by meeting type
   - track_action_items: Update and track action item status
   - generate_follow_up: Generate post-meeting follow-up summary
+  - describe: Return input schema and available operations
 
 Limitations:
   - Provides legal workflow assistance, not legal advice

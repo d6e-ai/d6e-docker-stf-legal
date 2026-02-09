@@ -12,6 +12,7 @@ Main Operations:
   - list_templates: List available template categories
   - create_template: Create a new response template
   - customize_response: Customize a generated response with variables
+  - describe: Return input schema and available operations
 
 Limitations:
   - Provides legal workflow assistance, not legal advice

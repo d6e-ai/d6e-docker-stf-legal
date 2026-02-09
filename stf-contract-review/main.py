@@ -12,6 +12,7 @@ Main Operations:
   - generate_redline: Generate redline suggestion for a clause
   - classify_deviation: Classify deviation severity
   - generate_review_summary: Generate review summary with priorities
+  - describe: Return input schema and available operations
 
 Limitations:
   - Provides legal workflow assistance, not legal advice
